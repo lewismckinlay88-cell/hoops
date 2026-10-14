@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hail Hail Hoops – Guess the Celtic appearances</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--g:#0b6b3a;--gd:#06402a;--w:#fff;--bg:#f3f6f1;--ink:#10241a;--mut:#5b6e62;--gold:#e8b923;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#07150f;--ink:#eef5ef;--mut:#9db3a5;--card:#0e2418}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 'Source Sans 3',system-ui,sans-serif;min-height:100vh}
+.hoops{height:34px;background:repeating-linear-gradient(90deg,var(--g) 0 28px,var(--w) 28px 56px)}
+main{max-width:480px;margin:0 auto;padding:18px 16px 40px}
+h1,h2,.big{font-family:Oswald,Impact,sans-serif;text-transform:none;letter-spacing:.01em;margin:0}
+h1{font-size:44px;line-height:1.05;color:var(--g)}
+@media(prefers-color-scheme:dark){h1{color:#3fd486}}
+p{margin:.6em 0}.mut{color:var(--mut)}
+.card{background:var(--card,#fff);border-radius:14px;padding:16px;box-shadow:0 1px 0 rgba(0,0,0,.08),0 0 0 1px rgba(11,107,58,.15)}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:14px 18px;background:var(--g);color:#fff;width:100%;cursor:pointer;font-size:18px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button.alt{background:transparent;color:var(--g);box-shadow:inset 0 0 0 2px var(--g)}
+@media(prefers-color-scheme:dark){button.alt{color:#3fd486;box-shadow:inset 0 0 0 2px #3fd486}}
+.top{display:flex;justify-content:space-between;font-weight:600;margin-bottom:10px}
+.photo{position:relative;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--gd);display:grid;place-items:center}
+.photo img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.photo svg{width:60%;opacity:.5}
+.spin{width:38px;height:38px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite;position:absolute}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation-duration:4s}}
+.name{font-size:32px;margin:12px 0 0;line-height:1.1}
+.val{font-family:Oswald,sans-serif;font-size:64px;font-weight:700;color:var(--g);text-align:center;line-height:1;margin:8px 0}
+@media(prefers-color-scheme:dark){.val{color:#3fd486}}
+input[type=range]{width:100%;accent-color:var(--g);height:34px}
+.row{display:flex;gap:10px;align-items:center;margin:8px 0}
+.row button{width:auto;padding:10px 14px;flex:1}
+.num{width:100px;font:inherit;font-size:20px;padding:10px;border-radius:10px;border:2px solid var(--g);background:transparent;color:inherit;text-align:center}
+.res{text-align:center}.res .big{font-size:56px;color:var(--g)}
+.pts{font-family:Oswald,sans-serif;font-size:30px}
+.final{font-size:96px;color:var(--g);text-align:center;line-height:1;font-family:Oswald,sans-serif;font-weight:700}
+.label{font-family:Oswald,sans-serif;font-size:30px;text-align:center;margin:8px 0;line-height:1.15}
+table{width:100%;border-collapse:collapse;font-size:15px}td{padding:6px 4px;border-top:1px solid rgba(11,107,58,.2)}td:nth-child(n+2){text-align:right}
+.stack>*+*{margin-top:12px}
+</style>
+</head>
+<body>
+<div class="hoops" aria-hidden="true"></div>
+<main id="app"></main>
+<script>
+// Source: Wikipedia "List of Celtic F.C. players" (competitive appearances, correct to 23 May 2026).
+// Format: Name|Position|Years|Appearances|optional Wikipedia title
+const RAW=`James Kelly|DF|1888–97|143|James_Kelly_(footballer,_born_1865)
+Willie Maley|DF|1888–97|100
+Johnny Madden|FW|1889–97|121
+Jerry Reynolds|DF|1889–95|102
+John Campbell|FW|1890–1903|221
+Dan Doyle|DF|1891–98|137
+Sandy McMahon|FW|1891–1903|217
+Daniel McArthur|GK|1892–1902|124
+James Blessington|FW|1892–98|102
+Barney Battles|DF|1895–1905|135
+Peter Somers|FW|1897–1910|220
+Willie Orr|DF|1897–1907|212
+Willie Loney|DF|1900–13|303
+Jimmy Quinn|FW|1900–17|332|Jimmy_Quinn_(footballer,_born_1878)
+Davie Hamilton|FW|1902–12|260
+Jimmy McMenemy|FW|1902–20|516
+Davey Adams|GK|1902–12|291
+Donald McLeod|DF|1902–08|153
+James Young|MF|1903–17|443
+Alex Bennett|FW|1903–08|151
+Jimmy Hay|DF|1903–11|257
+Alec McNair|DF|1904–25|641
+Peter Johnstone|DF|1908–16|233
+Joe Dodds|DF|1908–22|385
+Andrew McAtee|FW|1910–24|439
+Patsy Gallacher|FW|1911–25|464
+John Browning|FW|1911–19|216
+Willie McStay|DF|1912–29|446
+Jimmy McColl|FW|1912–24|169
+Joe Cassidy|FW|1912–24|203
+Charlie Shaw|GK|1913–25|446
+John McMaster|DF|1913–23|217
+Adam McLean|FW|1917–28|408
+William Cringan|MF|1917–23|214
+Tommy McInally|FW|1919–28|213
+John Gilchrist|MF|1919–23|134
+John McFarlane|DF|1920–29|304
+Paddy Connolly|FW|1921–33|299
+Jimmy McStay|DF|1921–34|472
+Hugh Hilley|DF|1921–30|207
+Jimmy McGrory|FW|1922–37|445|Jimmy_McGrory
+Alec Thomson|FW|1922–34|451
+Peter Wilson|MF|1923–34|395
+Peter Shevlin|GK|1924–27|103
+John Thomson|GK|1926–31|188|John_Thomson_(footballer,_born_1909)
+Peter McGonagle|DF|1926–36|324
+Chic Geatons|MF|1927–41|345
+Charlie Napier|FW|1928–35|200
+Peter Scarff|FW|1928–33|112
+Willie Hughes|MF|1929–36|104
+John Morrison|MF|1929–41|182
+Bertie Thomson|FW|1929–33|131
+Billy Cook|DF|1930–32|109
+Joe Kennaway|GK|1931–39|263
+Malky MacDonald|MF|1932–45|145
+Bobby Hogg|DF|1932–48|328|Bobby_Hogg_(footballer,_born_1914)
+Johnny Crum|FW|1932–42|210
+Jimmy Delaney|FW|1933–46|305
+Stephen Grant|FW|1933–37|123
+Willie Buchan|FW|1933–37|134
+Frank Murphy|FW|1933–45|161
+George Paterson|DF|1933–46|195
+Willie Lyon|DF|1935–40|163
+Willie Miller|GK|1940–50|123
+Pat McAuley|MF|1940–50|109
+Roy Milne|DF|1940–52|133
+John McPhail|FW|1941–56|204
+Jim Mallan|DF|1942–53|117
+Bobby Evans|MF|1944–60|535
+Joe Baillie|DF|1945–54|151
+John Bonnar|GK|1948–58|180
+Charlie Tully|FW|1948–59|319
+Jock Weir|MF|1948–52|106
+Mike Haughney|DF|1949–57|233
+Bobby Collins|MF|1949–58|320
+Bertie Peacock|MF|1949–61|453
+Willie Fernie|MF|1949–61|317
+Jimmy Walsh|DF|1949–56|145
+Sean Fallon|DF|1950–58|254
+Jock Stein|DF|1951–56|148
+Neil Mochan|FW|1953–60|268
+Eric Smith|MF|1953–60|130
+Dick Beattie|GK|1954–59|114
+Bertie Auld|FW|1955–71|257
+Duncan MacKay|DF|1955–64|232
+Jim Kennedy|DF|1955–65|242
+Paddy Crerand|MF|1957–63|120
+John Divers|FW|1957–66|232
+Billy McNeill|DF|1957–75|790
+Frank Haffey|GK|1958–64|201
+Stevie Chalmers|FW|1958–71|405
+John Clark|DF|1958–71|320|John_Clark_(footballer,_born_1941)
+Charlie Gallagher|FW|1958–68|171|Charlie_Gallagher_(association_footballer)
+Bobby Murdoch|MF|1959–73|485
+John Fallon|GK|1959–71|184
+John Hughes|FW|1960–71|416|John_Hughes_(footballer,_born_1943)
+Bobby Lennox|FW|1961–80|587
+Tommy Gemmell|DF|1961–71|421
+Ian Young|DF|1961–68|137
+Jimmy Johnstone|FW|1962–75|515
+Jim Brogan|DF|1962–75|213
+Ronnie Simpson|GK|1964–70|189
+Jim Craig|DF|1965–72|231|Jim_Craig_(footballer,_born_1943)
+Willie Wallace|FW|1966–71|234|Willie_Wallace_(footballer,_born_1940)
+George Connelly|DF|1966–76|254
+Harry Hood|FW|1968–76|312
+Tommy Callaghan|MF|1968–76|284
+Evan Williams|GK|1969–74|148
+Davie Hay|MF|1968–74|230
+Kenny Dalglish|FW|1969–77|322
+Pat McCluskey|MF|1969–77|189
+Paul Wilson|MF|1970–78|214
+Danny McGrain|DF|1970–87|663
+Lou Macari|MF|1970–73|102
+Dixie Deans|FW|1971–76|184
+Roddie MacDonald|DF|1972–81|254
+Andy Lynch|DF|1973–80|187
+Steve Murray|MF|1973–76|100
+George McCluskey|FW|1974–83|204
+Ronnie Glavin|MF|1974–79|101
+Jóhannes Eðvaldsson|DF|1975–80|188
+Peter Latchford|GK|1975–87|272
+Tommy Burns|MF|1975–89|501
+Johnny Doyle|FW|1976–81|179
+Roy Aitken|DF|1976–90|672
+Tom McAdam|DF|1977–86|354
+Mark Reid|DF|1977–85|177
+Packie Bonner|GK|1978–97|642|Packie_Bonner
+Murdo MacLeod|MF|1978–87|395
+David Provan|FW|1978–87|303
+Dom Sullivan|MF|1979–83|113
+Charlie Nicholas|FW|1979–95|250
+Frank McGarvey|FW|1980–85|245
+Paul McStay|MF|1981–97|678
+Peter Grant|MF|1982–97|470
+Brian McClair|FW|1983–87|198
+Mo Johnston|FW|1984–87|127
+Derek Whyte|DF|1985–92|276
+Mark McGhee|FW|1985–89|113
+Anton Rogan|DF|1986–91|166
+Gerry Creaney|FW|1987–94|144
+Andy Walker|FW|1987–96|189
+Chris Morris|DF|1987–92|160
+Frank McAvennie|FW|1987–94|106
+Joe Miller|FW|1987–93|152
+Mark McNally|DF|1987–95|152
+Tommy Coyne|FW|1989–93|105
+Paul Elliott|DF|1989–91|66|Paul_Elliott_(footballer)
+Dariusz Dziekanowski|FW|1989–92|49
+Mike Galloway|MF|1989–96|175
+Dariusz Wdowczyk|DF|1989–94|147
+John Collins|MF|1990–96|229|John_Collins_(footballer,_born_1968)
+Brian O'Neil|DF|1991–97|121
+Gordon Marshall|GK|1991–98|112
+Tom Boyd|DF|1992–2003|364
+Simon Donnelly|FW|1993–99|181
+Phil O'Donnell|MF|1994–99|114
+Tosh McKinlay|DF|1994–99|124
+Pierre van Hooijdonk|FW|1995–97|84
+Andreas Thom|FW|1995–98|101
+Morten Wieghorst|MF|1995–2002|105
+Jackie McNamara|DF|1995–2005|358
+Jorge Cadete|FW|1996–97|48
+Alan Stubbs|DF|1996–2001|127
+Paolo Di Canio|FW|1996–97|37
+Craig Burley|MF|1997–99|93
+Henrik Larsson|FW|1997–2004|315
+Stéphane Mahé|DF|1997–2001|109
+Jonathan Gould|GK|1997–2003|158
+Paul Lambert|MF|1997–2006|275
+Mark Burchill|FW|1998–2001|50
+Johan Mjällby|DF|1998–2004|198
+Ľubomír Moravčík|MF|1998–2002|129
+Mark Viduka|FW|1998–2000|46
+Stiliyan Petrov|MF|1999–2006|311
+Shaun Maloney|FW|1999–2011|216
+Chris Sutton|FW|2000–06|199
+Joos Valgaeren|DF|2000–05|178
+Alan Thompson|MF|2000–07|227|Alan_Thompson_(footballer,_born_1973)
+Didier Agathe|MF|2000–06|183
+Robert Douglas|GK|2000–05|172
+Neil Lennon|MF|2000–07|304
+Dianbobo Baldé|DF|2001–09|234
+John Hartson|FW|2001–06|201
+Stephen McManus|DF|2003–10|203
+Stanislav Varga|DF|2003–06|116
+Aiden McGeady|MF|2004–10|252
+Artur Boruc|GK|2005–10|221
+Shunsuke Nakamura|MF|2005–09|165
+Mark Wilson|DF|2006–12|131
+Gary Caldwell|DF|2006–10|151
+Jan Vennegoor of Hesselink|FW|2006–09|108
+Lee Naylor|DF|2006–10|142
+Scott Brown|MF|2007–21|620|Scott_Brown_(footballer,_born_June_1985)
+Scott McDonald|FW|2007–10|127
+Andreas Hinkel|DF|2008–11|103
+Georgios Samaras|FW|2008–14|248
+James Forrest|FW|2010–|569
+Charlie Mulgrew|DF|2010–16|208
+Fraser Forster|GK|2010–20|236
+Joe Ledley|MF|2010–14|157
+Beram Kayal|MF|2010–15|132
+Gary Hooper|FW|2010–14|138
+Anthony Stokes|FW|2010–16|192
+Emilio Izaguirre|DF|2010–19|271
+Kris Commons|MF|2011–17|227
+Adam Matthews|DF|2011–15|148
+Victor Wanyama|MF|2011–13|91
+Mikael Lustig|DF|2011–19|276
+Efe Ambrose|DF|2012–17|169
+Tom Rogic|MF|2013–22|272
+Virgil van Dijk|DF|2013–15|114
+Nir Bitton|MF|2013–22|271
+Callum McGregor|MF|2013–|575
+Stefan Johansen|MF|2014–16|114
+Leigh Griffiths|FW|2014–22|261
+Craig Gordon|GK|2014–20|242
+Kieran Tierney|DF|2014–|223
+Stuart Armstrong|MF|2015–18|145
+Anthony Ralston|DF|2015–|161
+Dedryck Boyata|DF|2015–19|135
+Jozo Šimunović|DF|2015–20|126
+Ryan Christie|MF|2015–21|142
+Kristoffer Ajer|DF|2016–21|177
+Moussa Dembélé|FW|2016–18|94|Moussa_Dembélé_(French_footballer)
+Scott Sinclair|FW|2016–20|167
+Olivier Ntcham|MF|2017–21|146
+Odsonne Édouard|FW|2017–21|168
+Greg Taylor|DF|2019–25|216
+David Turnbull|MF|2020–24|106
+Liel Abada|MF|2021–24|113
+Kyogo Furuhashi|FW|2021–25|165
+Carl Starfelt|DF|2021–23|87
+Joe Hart|GK|2021–24|156
+Liam Scales|DF|2021–|153
+Jota|FW|2021–|99|Jota_(footballer,_born_1999)
+Cameron Carter-Vickers|DF|2021–|172
+Daizen Maeda|FW|2022–26|212
+Reo Hatate|MF|2022–|189
+Matt O'Riley|MF|2022–24|120
+Alistair Johnston|DF|2023–|122
+Yang Hyun-jun|FW|2023–|112
+Arne Engels|MF|2024–26|100`;
+const POS={GK:'Goalkeeper',DF:'Defender',MF:'Midfielder',FW:'Forward'};
+const PLAYERS=RAW.split('\n').map(l=>{const [n,p,y,a,w]=l.split('|');return{n,p:POS[p],y:y.endsWith('–')?y+'present':y,a:+a,w}});
+const ROUNDS=10, MAX=800;
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ð/g,'d').replace(/[łľ]/g,'l').toLowerCase();
+const API='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages|extracts&piprop=thumbnail&pithumbsize=600&exintro=1&explaintext=1&exlimit=max';
+const imgCache={};
+async function getImg(p){
+  if(p.n in imgCache)return imgCache[p.n];
+  let src=null;
+  try{
+    const u=p.w?API+'&titles='+encodeURIComponent(p.w):API+'&generator=search&gsrlimit=5&gsrsearch='+encodeURIComponent(p.n+' Celtic footballer');
+    const j=await(await fetch(u)).json();
+    const pages=Object.values(j.query?.pages||{}).sort((a,b)=>(a.index||0)-(b.index||0));
+    const sn=norm(p.n.split(' ').pop());
+    for(const g of pages){
+      if(g.thumbnail&&(p.w||(/Celtic/.test(g.extract||'')&&norm(g.title).includes(sn)))){src=g.thumbnail.source;break}
+    }
+  }catch(e){}
+  if(!src){
+    try{
+      const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(p.w||p.n.replace(/ /g,'_')));
+      const j=await r.json();
+      if(j.thumbnail&&/Celtic|footballer/.test((j.extract||'')+(j.description||'')))src=j.thumbnail.source;
+    }catch(e){}
+  }
+  return imgCache[p.n]=src;
+}
+let used=new Set(),game;
+async function draw(){
+  let last;
+  for(let i=0;i<10;i++){
+    let p;do{p=PLAYERS[Math.random()*PLAYERS.length|0]}while(used.has(p.n));
+    used.add(p.n);last={p,img:await getImg(p)};
+    if(last.img)return last;
+  }
+  return last;
+}
+const $=document.getElementById('app');
+const SIL='<svg viewBox="0 0 100 100" fill="#fff"><circle cx="50" cy="34" r="18"/><path d="M14 96c0-24 16-38 36-38s36 14 36 38z"/></svg>';
+function start(){
+  used=new Set();game={r:0,scores:[],log:[],next:draw()};
+  $.innerHTML=`<div class="stack"><h1>Hail Hail Hoops</h1>
+  <p>We show you a player who pulled on the hoops. You guess how many competitive games he played for Celtic. Ten players, closest guess scores most.</p>
+  <div class="card"><p style="margin:0">Appearances cover the Scottish league, Scottish Cup, League Cup and European competition, including sub appearances, up to 23 May 2026.</p></div>
+  <button id="go">Kick off</button><p class="mut" id="best"></p></div>`;
+  try{const b=localStorage.getItem('hc-best');if(b)document.getElementById('best').textContent='Your best: '+b+'%'}catch(e){}
+  document.getElementById('go').onclick=round;
+}
+async function round(){
+  $.innerHTML=`<div class="top"><span>Player ${game.r+1} of ${ROUNDS}</span><span>${game.scores.reduce((a,b)=>a+b,0)} pts</span></div><div class="photo"><div class="spin"></div></div>`;
+  const cur=await game.next;game.cur=cur;
+  game.next=game.r<ROUNDS-1?draw():null;
+  const {p,img}=cur;
+  $.innerHTML=`<div class="top"><span>Player ${game.r+1} of ${ROUNDS}</span><span>${game.scores.reduce((a,b)=>a+b,0)} pts</span></div>
+  <div class="photo" id="ph">${img?`<img alt="${p.n}" src="${img}">`:SIL}</div>
+  ${img?'':'<p class="mut" style="margin:4px 0 0;font-size:14px">No photo found for this player. If you see this every round, open the live site rather than a preview.</p>'}
+  <h2 class="name">${p.n}</h2><p class="mut" style="margin:2px 0 8px">${p.p}, ${p.y}</p>
+  <div class="card stack"><div class="mut" style="text-align:center">How many Celtic appearances?</div>
+  <div class="val" id="v">400</div>
+  <input type="range" id="s" min="0" max="${MAX}" value="400" aria-label="Appearances">
+  <div class="row"><button class="alt" data-d="-10">−10</button><button class="alt" data-d="-1">−1</button><input class="num" id="n" type="number" min="0" max="${MAX}" value="400" inputmode="numeric" aria-label="Appearances"><button class="alt" data-d="1">+1</button><button class="alt" data-d="10">+10</button></div>
+  <button id="lock">Lock it in</button></div>`;
+  const ph=document.getElementById('ph'),im=ph.querySelector('img');
+  if(im)im.onerror=()=>{ph.innerHTML=SIL};
+  const s=document.getElementById('s'),n=document.getElementById('n'),v=document.getElementById('v');
+  const set=x=>{x=Math.max(0,Math.min(MAX,Math.round(+x||0)));s.value=n.value=x;v.textContent=x};
+  s.oninput=()=>set(s.value);n.oninput=()=>{v.textContent=Math.max(0,Math.min(MAX,+n.value||0));s.value=n.value};
+  document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>set(+n.value+ +b.dataset.d));
+  const lock=()=>reveal(+n.value||0);
+  document.getElementById('lock').onclick=lock;
+  n.onkeydown=e=>{if(e.key==='Enter')lock()};
+}
+function reveal(g){
+  const {p}=game.cur,d=Math.abs(g-p.a),pts=Math.round(100*Math.max(0,1-d/p.a));
+  game.scores.push(pts);game.log.push({n:p.n,g,a:p.a,pts});
+  const last=game.r===ROUNDS-1;
+  const msg=d===0?'Spot on!':d<=p.a*.1?'So close.':d<=p.a*.3?'Not bad.':'Way off.';
+  $.innerHTML=`<div class="top"><span>Player ${game.r+1} of ${ROUNDS}</span><span>${game.scores.reduce((a,b)=>a+b,0)} pts</span></div>
+  <div class="card stack res"><h2 class="name" style="margin:0">${p.n}</h2>
+  <div class="mut">made</div><div class="big">${p.a}</div><div class="mut">Celtic appearances</div>
+  <p>You said <b>${g}</b>, ${d?d+(g>p.a?' too high':' too low'):'exactly right'}. ${msg}</p>
+  <div class="pts">+${pts} points</div>
+  <button id="nx">${last?'See my rating':'Next player'}</button></div>`;
+  document.getElementById('nx').onclick=()=>{game.r++;last?finish():round()};
+}
+function rating(x){
+  return x>=80?'Paul the Tim?':x>=60?'You are definitely part of the Celtic family - Hail Hail brother':x>=40?'Part Timer':x>=20?'Have you ever even been to parkers?':'Current Bun';
+}
+function finish(){
+  const pct=Math.round(game.scores.reduce((a,b)=>a+b,0)/ROUNDS),lab=rating(pct);
+  let best=0;try{best=+localStorage.getItem('hc-best')||0;if(pct>best){localStorage.setItem('hc-best',pct);best=pct}}catch(e){}
+  $.innerHTML=`<div class="stack"><h1>Full time</h1>
+  <div class="card"><div class="final">${pct}%</div><div class="label">${lab}</div></div>
+  <div class="card"><table>${game.log.map(l=>`<tr><td>${l.n}</td><td>${l.g} / ${l.a}</td><td>${l.pts}</td></tr>`).join('')}</table></div>
+  <p class="mut" style="text-align:center">Your best: ${best}%</p>
+  <button id="sh">Copy my score</button><button class="alt" id="again">Play again</button></div>`;
+  document.getElementById('again').onclick=start;
+  document.getElementById('sh').onclick=e=>{
+    const t=`Hail Hail Hoops: I scored ${pct}% – "${lab}"`;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>e.target.textContent='Copied!').catch(()=>e.target.textContent=t);
+  };
+}
+start();
+</script>
+</body>
+</html>
